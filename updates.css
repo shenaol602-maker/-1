@@ -9,3 +9,15 @@
 .art-card:has(.art-image)::before,
 .art-card:has(.art-image)::after { opacity: .18; }
 .art-card small { margin-top: 4px; color: #34443c; }
+
+.poster .poster-image {
+  position: absolute !important;
+  inset: 0;
+  z-index: 0 !important;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.poster:has(.poster-image) { background: #101b17; }
+.poster:has(.poster-image)::before,
+.poster:has(.poster-image)::after { opacity: .18; }
