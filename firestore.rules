@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isOwner(field) { return signedIn() && request.auth.uid == field; }
+    function hasRole(role) {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+    function ownsShow(showId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/shows/$(showId)).data.ownerId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow update: if signedIn() && request.auth.uid == userId
+        && request.resource.data.role == resource.data.role;
+    }
+    match /works/{workId} {
+      allow read: if signedIn();
+      allow create: if hasRole('artist') && isOwner(request.resource.data.artistId);
+      allow update, delete: if isOwner(resource.data.artistId);
+    }
+    match /shows/{showId} {
+      allow read: if signedIn();
+      allow create: if hasRole('curator') && isOwner(request.resource.data.ownerId);
+      allow update, delete: if isOwner(resource.data.ownerId);
+    }
+    match /applications/{applicationId} {
+      allow read: if isOwner(resource.data.artistId) || ownsShow(resource.data.showId);
+      allow create: if hasRole('artist') && isOwner(request.resource.data.artistId);
+      allow update, delete: if isOwner(resource.data.artistId) || ownsShow(resource.data.showId);
+    }
+  }
+}
